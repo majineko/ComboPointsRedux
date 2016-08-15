@@ -1,8 +1,8 @@
 --[[
 ComboPointsRedux_Options - LoD option module for ComboPointsRedux
 Author: Michael Joseph Murray aka Lyte of Lothar(US)
-$Revision: 410 $
-$Date: 2016-08-08 18:53:00 -0500 (Mon, 08 Aug 2016) $
+$Revision: 417 $
+$Date: 2016-08-14 14:26:55 +0000 (Sun, 14 Aug 2016) $
 Project Version: 2.0.0 beta2
 contact: codemaster2010 AT gmail DOT com
 
@@ -60,9 +60,11 @@ local symbols = {
 	UnholyRune = L["Unholy Rune"],
 	TouchofKarma = GetSpellInfo(124280),
 }
-local orientations =  {h = L["Horizontal"], v = L["Vertical"],}
+
+local growthdirections = {right = "Right", left = "Left", up = "Up", down = "Down"}
 local outlineStyles = {NONE = _G["NONE"], OUTLINE = L["Outline"], THICKOUTLINE = L["Thick Outline"]}
 local flashModes = {STRICT = L["STRICT"], RELAXED = L["RELAXED"]}
+local modes = {icon = "Icon Mode", frame = "Frame Mode"}
 
 local opts = {
 	type = 'group',
@@ -245,11 +247,6 @@ for name, module in core:IterateModules() do
 				order = 4,
 				disabled = function() return core.db.profile.modules[name].disableGraphics end,
 				args = {
-                    help = {
-                        order = 0,
-                        type = 'description',
-                        name = '- Point height and width are calculated from the overall frame size (then multiplied by Scale) \n    - Example:\n    - You want 20x20 square icons and 5 pixels of spacing between them.\n    - Your class has six points.\n    - Set Height to 20 and Width to 150\n    - 150 = (20 * 6) + (5 * 6)\n'
-                    },
 					oneColor = {
 						type = 'color',
 						name = format(L["%d |4Point:Points;"], 0),
@@ -267,17 +264,17 @@ for name, module in core:IterateModules() do
 						get = "Get",
 						set = "Set",
 						values = symbols,
-						order = 106,
+						order = 10,
 					},
-					orientation = {
+					growthdirection = {
 						type = "select",
-						name = L["Orientation"],
-						desc = L["Select the orientation of the graphical display (horizontal or vertical)."],
-						arg = "orientation",
+						name = "Growth Direction",
+						desc = "Select the growth direction.",
+						arg = "growthdirection",
 						get = "Get",
 						set = "Set",
-						values = orientations,
-						order = 107,
+						values = growthdirections,
+						order = 12,
 					},
 					strata = {
 						type = 'select',
@@ -287,7 +284,7 @@ for name, module in core:IterateModules() do
 						set = "Set",
 						arg = "strata",
 						values = stratas,
-						order = 108,
+						order = 13,
 					},
 					clamp = {
 						type = 'toggle',
@@ -296,7 +293,7 @@ for name, module in core:IterateModules() do
 						get = "Get",
 						set = "Set",
 						arg = "clampedGraphics",
-						order = 108,
+						order = 14,
 					},
 					alpha = {
 						type = 'range',
@@ -308,7 +305,7 @@ for name, module in core:IterateModules() do
 						min = 0.0,
 						max = 1.0,
 						step = 0.01,
-						order = 109,
+						order = 15,
 					},
 					emptyPointAlpha = {
 						type = 'range',
@@ -320,31 +317,7 @@ for name, module in core:IterateModules() do
 						min = 0.0,
 						max = 1.0,
 						step = 0.01,
-						order = 114,
-					},
-					width = {
-						type = 'range',
-						name = "Width",
-						desc = "Set the total width of the icon frame. This is the height when in Vertical mode.",
-						arg = "width",
-						get = "Get",
-						set = "Set",
-						min = 10,
-						max = 500,
-						step = 0.01,
-						order = 110,
-					},
-					height = {
-						type = 'range',
-						name = "Height",
-						desc = "Set the total Height of the icon frame. This is the width when in Vertical mode.",
-						arg = "height",
-						get = "Get",
-						set = "Set",
-						min = 0,
-						max = 500,
-						step = 0.01,
-						order = 110,
+						order = 16,
 					},
 					scale = {
 						type = 'range',
@@ -356,19 +329,7 @@ for name, module in core:IterateModules() do
 						min = 0.1,
 						max = 3.5,
 						step = 0.001,
-						order = 111,
-					},
-					spacing = {
-						type = 'range',
-						name = L["Icon Spacing"],
-						desc = L["Set the spacing between the icons."],
-						arg = "spacing",
-						get = "Get",
-						set = "Set",
-						min = -2,
-						max = 10,
-						step = 1,
-						order = 112,
+						order = 17,
 					},
 					x = {
 						type = 'range',
@@ -381,7 +342,7 @@ for name, module in core:IterateModules() do
 						softMax = math.floor(GetScreenWidth()),
 						step = 1,
 						bigStep = 5,
-						order = 113,
+						order = 18,
 					},
 					y = {
 						type = 'range',
@@ -394,7 +355,110 @@ for name, module in core:IterateModules() do
 						softMax = math.floor(GetScreenHeight()),
 						step = 1,
 						bigStep = 5,
-						order = 113,
+						order = 19,
+					},
+					spacing = {
+						type = 'range',
+						name = L["Icon Spacing"],
+						desc = "Set the spacing between the icons.",
+						arg = "spacing",
+						get = "Get",
+						set = "Set",
+						min = -2,
+						max = 10,
+						step = 1,
+						order = 10,
+					},
+					text1 = {
+                        order = 30,
+                        type = 'description',
+                        name = '',
+					}, -- Needed a line break. Is there a better way?
+					mode = {
+						type = "select",
+						name = "Mode",
+						desc = ".",
+						arg = "mode",
+						get = "Get",
+						set = "Set",
+						values = modes,
+						order = 31,
+					},
+					iconmode = {
+						type = "group",
+						name = "Icon Mode",
+						inline = true,
+						order = 102,
+						disabled = function() return core.db.profile.modules[name].mode == "frame" end,
+						args = {
+							iconwidth = {
+								type = 'range',
+								name = "Icon Width",
+								desc = "Set the Icon Width when in Icon Mode.",
+								arg = "iconwidth",
+								get = "Get",
+								set = "Set",
+								min = 10,
+								max = 500,
+								step = 0.01,
+								order = 1,
+							},
+							iconheight = {
+								type = 'range',
+								name = "Icon Height",
+								desc = "Set the Icon Height when in Icon Mode.",
+								arg = "iconheight",
+								get = "Get",
+								set = "Set",
+								min = 0,
+								max = 500,
+								step = 0.01,
+								order = 2,
+							},
+						},
+					},
+					framemode = {
+						type = "group",
+						name = "Frame Mode",
+						inline = true,
+						order = 103,
+						disabled = function() return core.db.profile.modules[name].mode == "icon" end,
+						args = {
+							width = {
+								type = 'range',
+								name = "Frame Width",
+								desc = "Set the total width of the icon frame.",
+								arg = "width",
+								get = "Get",
+								set = "Set",
+								min = 10,
+								max = 500,
+								step = 0.01,
+								order = 1,
+							},
+							height = {
+								type = 'range',
+								name = "Frame Height",
+								desc = "Set the total Height of the icon frame.",
+								arg = "height",
+								get = "Get",
+								set = "Set",
+								min = 0,
+								max = 500,
+								step = 0.01,
+								order = 2,
+								disabled = function() return core.db.profile.modules[name].forcesquare or core.db.profile.modules[name].mode == "icon" end,
+							},
+							forcesquare = {
+								type = 'toggle',
+								name = "Force Square Icon",
+								desc = "In Frame Mode, forces icon size to square.",
+								arg = "forcesquare",
+								get = "Get",
+								set = "Set",
+								order = 3,
+							},
+						},
 					},
 				},
 			},
@@ -637,4 +701,7 @@ opts.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(core.db)
 LibStub('LibDualSpec-1.0'):EnhanceOptions(opts.args.profile, core.db)
 
 LibStub("AceConfig-3.0"):RegisterOptionsTable("ComboPointsRedux", opts)
-LibStub("AceConfigDialog-3.0"):SetDefaultSize("ComboPointsRedux", 800, 500)
+LibStub("AceConfigDialog-3.0"):SetDefaultSize("ComboPointsRedux", 805, 500)
+-- Option menu was acting weird, made it 5 pixels wider.
+-- some options were wrapping around to new line without the items below them moving down
+-- one pixel wider or thinner would fix it

@@ -1,9 +1,9 @@
 --[[
 Author: Starinnia
 CPR is a combo points display addon based on Funkydude's BasicComboPoints
-$Date: 2016-07-20 19:55:36 -0500 (Wed, 20 Jul 2016) $
-$Revision: 384 $
-Project Version: @project-version@
+$Date: 2016-08-14 14:49:58 +0000 (Sun, 14 Aug 2016) $
+$Revision: 419 $
+Project Version: 4.0.13
 contact: codemaster2010 AT gmail DOT com
 
 Copyright (c) 2007-2014 Michael J. Murray aka Lyte of Lothar(US)
@@ -113,7 +113,7 @@ function ComboPointsRedux:OnInitialize()
 					disableText = false,
 					hideTextAtZero = true,
 					--graphics options
-					orientation = "h",
+					growthdirection = "right",
 					icon = "square",
 					colors = {
 						['**'] = {1, 0.9, 0},
@@ -121,7 +121,11 @@ function ComboPointsRedux:OnInitialize()
 					},
 					graphicsAlpha = 1,
 					spacing = 5,
-					width = 250,
+					mode = "frame",
+					forcesquare = false,
+					iconwidth = 25,
+					iconheight = 25,
+					width = 150,
 					height = 25,
 					emptyPointAlpha = 0.0,
 					scale = 1,
@@ -211,16 +215,27 @@ function ComboPointsRedux:Reset()
 		module.text:SetPoint("CENTER", UIParent, "CENTER", math.random(-150, 150), math.random(-150, 150))
 		module.graphics:SetPoint("CENTER", UIParent, "CENTER", math.random(-150, 150), math.random(-150, 150))
 		
-		module.graphics:SetWidth(db.width*db.scale)
-		module.graphics:SetHeight(db.height*db.scale)
+		if db.growthdirection == "right" or db.growthdirection == "left" then
+			module.graphics:SetWidth(db.width*db.scale)
+			module.graphics:SetHeight(db.height*db.scale)
+		else
+			module.graphics:SetWidth(db.height*db.scale)
+			module.graphics:SetHeight(db.width*db.scale)
+		end
 		
-		local offset = db.spacing
+		
+		local offset = db.spacing--*db.scale
 		
 		local num = module.MAX_POINTS
 		for i = 1, num do
 			module.graphics.points[i].icon:SetTexture(basepath..db.icon)
-			module.graphics.points[i]:SetWidth(((db.width*db.scale)-(offset*(num-1)))/num)
-			module.graphics.points[i]:SetHeight(db.height*db.scale)
+			if db.growthdirection == "right" or db.growthdirection == "left" then
+				module.graphics.points[i]:SetWidth(db.iconwidth*db.scale)
+				module.graphics.points[i]:SetHeight(db.iconheight*db.scale)
+			else
+				module.graphics.points[i]:SetWidth(db.iconheight*db.scale)
+				module.graphics.points[i]:SetHeight(db.iconwidth*db.scale)
+			end
 			module.graphics.points[i]:SetAlpha(db.emptyPointAlpha)
 			module.graphics.points[i]:ClearAllPoints()
 		end
@@ -233,11 +248,35 @@ function ComboPointsRedux:Reset()
 			end
 		end
 		
-		module.graphics.points[1]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", 0, 0)
-		if num > 1 then
-			for i = 2, num do
-				module.graphics.points[i]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", ((((db.width*db.scale)-(offset*(num-1)))/num)*(i-1))+(offset*(i-1)), 0)
+		-- doesnt really need all the checks, since reset is defaulted to right, same up above at line 218 for vertical
+		if db.growthdirection == "up" then
+			module.graphics.points[1]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", 0, 0)
+			if num > 1 then
+				for i = 2, num do
+					module.graphics.points[i]:SetPoint("BOTTOMLEFT", module.graphics.points[i-1], "TOPLEFT", 0, offset)
+				end
 			end
+		elseif db.growthdirection == "down" then
+			module.graphics.points[1]:SetPoint("TOPLEFT", module.graphics, "TOPLEFT", 0, 0)
+			if num > 1 then
+				for i = 2, num do
+					module.graphics.points[i]:SetPoint("TOPLEFT", module.graphics.points[i-1], "BOTTOMLEFT", 0, -offset)
+				end
+			end		
+		elseif db.growthdirection == "right" then
+			module.graphics.points[1]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", 0, 0)
+			if num > 1 then
+				for i = 2, num do
+					module.graphics.points[i]:SetPoint("BOTTOMLEFT", module.graphics.points[i-1], "BOTTOMRIGHT", offset, 0)
+				end
+			end		
+		elseif db.growthdirection == "left" then
+			module.graphics.points[1]:SetPoint("BOTTOMRIGHT", module.graphics, "BOTTOMRIGHT", 0, 0)
+			if num > 1 then
+				for i = 2, num do
+					module.graphics.points[i]:SetPoint("BOTTOMRIGHT", module.graphics.points[i-1], "BOTTOMLEFT", -offset, 0)
+				end
+			end			
 		end
 		
 		module.text.count:SetShadowColor(0, 0, 0, db.textAlpha)
@@ -303,7 +342,15 @@ function ComboPointsRedux:Refresh()
 				local y = db.graphicsY
 				if x and y then
 					local s = module.graphics:GetEffectiveScale()
-					module.graphics:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+						if db.growthdirection == "right" then
+							module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+						elseif db.growthdirection == "left" then
+							module.graphics:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", x / s + db.iconwidth*db.scale, y / s)
+						elseif db.growthdirection == "up" then
+							module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+						elseif db.growthdirection == "down" then
+							module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s + db.iconwidth*db.scale)
+						end
 				else
 					module.graphics:SetPoint("CENTER", UIParent, "CENTER", math.random(-150, 150), math.random(-150, 150))
 				end
@@ -361,7 +408,15 @@ function ComboPointsRedux:UpdatePositions(name)
 		local x = db.graphicsX or 0
 		local y = db.graphicsY or 0
 		local s = module.graphics:GetEffectiveScale()
-		module.graphics:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+		if db.growthdirection == "right" then
+			module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+		elseif db.growthdirection == "left" then
+			module.graphics:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", x / s + db.iconwidth*db.scale, y / s)
+		elseif db.growthdirection == "up" then
+			module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+		elseif db.growthdirection == "down" then
+			module.graphics:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s + db.iconwidth*db.scale)
+		end
 	end
 end
 
@@ -369,19 +424,62 @@ function ComboPointsRedux:UpdateSettings(name)
 	local db = self.db.profile.modules[name]
 	local module = self:GetModule(name)
 	local num = module.MAX_POINTS
-	local offset = db.spacing--*db.scale
+	local offset = db.spacing
 	local a = db.graphicsAlpha
 	local a2 = db.emptyPointAlpha
 	
+
 	--graphics
 	if not db.disableGraphics then
-		--change icon textures
-		--update icon Alpha
+		--adjust container scale and size
+		module.graphics:ClearAllPoints()
+		local x = db.graphicsX or 0
+		local y = db.graphicsY or 0
+		local s = module.graphics:GetEffectiveScale()
+		
+		if db.mode == "icon" and num > 0 then -- if in icon mode, set frame size
+			db.width = db.iconwidth*num+offset*(num-1)
+			db.height = db.iconheight
+		elseif db.mode == "frame" and num > 0 then -- if in frame mode, set icon size
+			db.iconwidth = (db.width-(offset*(num-1)))/num
+			db.iconheight = db.height
+			if db.forcesquare then -- when forcing square buttons, set height to width
+				db.iconheight = db.iconwidth
+				db.height = db.iconheight
+			end
+		end
+		-- for all growth directions, position frame so the first point is in the same place
+		-- needed to do this after adjusting icon sizes
+		if db.growthdirection == "right" then
+			module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+		elseif db.growthdirection == "left" then
+			module.graphics:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", x / s + db.iconwidth*db.scale, y / s)
+		elseif db.growthdirection == "up" then
+			module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+		elseif db.growthdirection == "down" then
+			module.graphics:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s + db.iconwidth*db.scale)
+		end
+		
+		-- setting frame size, flipped h and w if veritcal
+		if db.growthdirection == "right" or db.growthdirection == "left" then
+			module.graphics:SetWidth(db.width*db.scale)
+			module.graphics:SetHeight(db.height*db.scale)
+		else
+			module.graphics:SetWidth(db.height*db.scale)
+			module.graphics:SetHeight(db.width*db.scale)
+		end
+		
 		for i = 1, num do
 			module.graphics.points[i].icon:SetTexture(basepath..db.icon)
 			module.graphics.points[i].icon:SetVertexColor(unpack(db.colors[module.Count]))
-			module.graphics.points[i]:SetWidth(((db.width*db.scale)-(offset*(num-1)))/num)
-			module.graphics.points[i]:SetHeight(db.height*db.scale)
+			-- flip icon height and width if vert
+			if db.growthdirection == "right" or db.growthdirection == "left" then
+				module.graphics.points[i]:SetWidth(db.iconwidth*db.scale)
+				module.graphics.points[i]:SetHeight(db.iconheight*db.scale)
+			else
+				module.graphics.points[i]:SetWidth(db.iconheight*db.scale)
+				module.graphics.points[i]:SetHeight(db.iconwidth*db.scale)
+			end
 			module.graphics.points[i]:ClearAllPoints()
 		end
 		for i = 1, 8 do
@@ -392,31 +490,38 @@ function ComboPointsRedux:UpdateSettings(name)
 				module.graphics.points[i]:SetAlpha(a)
 			end
 		end
-		--adjust container scale
-		if db.orientation == "v" then
-			module.graphics:SetHeight(db.width*db.scale)
-			module.graphics:SetWidth(db.height*db.scale)
-		else
-			module.graphics:SetWidth(db.width*db.scale)
-			module.graphics:SetHeight(db.height*db.scale)
-		end
 		
 		--adjust for orientation changes (this updates spacing too)
-		if db.orientation == "v" then
-			module.graphics.points[1]:SetPoint("BOTTOM", module.graphics, "BOTTOM", 0, 0)
-			if num > 1 then
-				for i = 2, num do
-					module.graphics.points[i]:SetPoint("BOTTOM", module.graphics.points[i-1], "TOP", 0, offset)
-				end
-			end
-		else
+		if db.growthdirection == "up" then
 			module.graphics.points[1]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", 0, 0)
 			if num > 1 then
 				for i = 2, num do
-					module.graphics.points[i]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", ((((db.width*db.scale)-(offset*(num-1)))/num)*(i-1))+(offset*(i-1)), 0)
+					module.graphics.points[i]:SetPoint("BOTTOMLEFT", module.graphics.points[i-1], "TOPLEFT", 0, offset)
 				end
 			end
+		elseif db.growthdirection == "down" then
+			module.graphics.points[1]:SetPoint("TOPLEFT", module.graphics, "TOPLEFT", 0, 0)
+			if num > 1 then
+				for i = 2, num do
+					module.graphics.points[i]:SetPoint("TOPLEFT", module.graphics.points[i-1], "BOTTOMLEFT", 0, -offset)
+				end
+			end		
+		elseif db.growthdirection == "right" then
+			module.graphics.points[1]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", 0, 0)
+			if num > 1 then
+				for i = 2, num do
+					module.graphics.points[i]:SetPoint("BOTTOMLEFT", module.graphics.points[i-1], "BOTTOMRIGHT", offset, 0)
+				end
+			end		
+		elseif db.growthdirection == "left" then
+			module.graphics.points[1]:SetPoint("BOTTOMRIGHT", module.graphics, "BOTTOMRIGHT", 0, 0)
+			if num > 1 then
+				for i = 2, num do
+					module.graphics.points[i]:SetPoint("BOTTOMRIGHT", module.graphics.points[i-1], "BOTTOMLEFT", -offset, 0)
+				end
+			end			
 		end
+		
 		
 		--update strata
 		module.graphics:SetFrameStrata(db.strata)
@@ -599,12 +704,24 @@ function ComboPointsRedux:MakeGraphicsFrame(moduleName, num, count)
 	g:SetFrameStrata(db.strata)
 	g:SetClampedToScreen(db.clampedGraphics)
 	
-	if db.orientation == "v" then
-		g:SetHeight(db.width*db.scale)
-		g:SetWidth(db.height*db.scale)
-	else
+	if db.mode == "icon" and num > 0 then -- if in icon mode, set frame size
+		db.width = db.iconwidth*num+offset*(num-1)
+		db.height = db.iconheight
+	elseif db.mode == "frame" and num > 0 then -- if in frame mode, set icon size
+		db.iconwidth = (db.width-(offset*(num-1)))/num
+		db.iconheight = db.height
+		if db.forcesquare then -- when forcing square buttons, set height to width
+			db.iconheight = db.iconwidth
+			db.height = db.iconheight
+		end
+	end
+	
+	if db.growthdirection == "right" or db.growthdirection == "left" then
 		g:SetWidth(db.width*db.scale)
 		g:SetHeight(db.height*db.scale)
+	else
+		g:SetWidth(db.height*db.scale)
+		g:SetHeight(db.width*db.scale)
 	end
 	
 	local x = db.graphicsX
@@ -612,7 +729,15 @@ function ComboPointsRedux:MakeGraphicsFrame(moduleName, num, count)
 	local s = g:GetEffectiveScale()
 	if x and y then
 		g:ClearAllPoints()
-		g:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+		if db.growthdirection == "right" then
+			g:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+		elseif db.growthdirection == "left" then
+			g:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", (x / s) + db.iconwidth*db.scale, y / s)
+		elseif db.growthdirection == "up" then
+			g:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+		elseif db.growthdirection == "down" then
+			g:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s + db.iconwidth*db.scale)
+		end
 	else
 		g:ClearAllPoints()
 		g:SetPoint("CENTER", UIParent, "CENTER", math.random(-150, 150), math.random(-150, 150))
@@ -636,8 +761,8 @@ function ComboPointsRedux:MakeGraphicsFrame(moduleName, num, count)
 		g.points[i].icon:SetTexture(basepath..db.icon)
 		g.points[i].icon:SetVertexColor(unpack(db.colors[count]))
 		g.points[i]:SetAlpha(db.emptyPointAlpha)
-		g.points[i]:SetHeight(db.height*db.scale)
-		g.points[i]:SetWidth(((db.width*db.scale)-(offset*(num-1)))/num)
+		g.points[i]:SetHeight(db.iconheight*db.scale)
+		g.points[i]:SetWidth(db.iconwidth*db.scale)
 		g.points[i]:Hide()
 	end
 	
@@ -658,20 +783,34 @@ function ComboPointsRedux:MakeGraphicsFrame(moduleName, num, count)
 		g:SetMovable(false)
 	end
 	
-	if db.orientation == "v" then
-		g.points[1]:SetPoint("BOTTOM", g, "BOTTOM", 0, 0)
-		if num > 1 then
-			for i = 2, num do
-				g.points[i]:SetPoint("BOTTOM", g.points[i-1], "TOP", 0, offset)
-			end
-		end
-	else
+	if db.growthdirection == "up" then
 		g.points[1]:SetPoint("BOTTOMLEFT", g, "BOTTOMLEFT", 0, 0)
 		if num > 1 then
 			for i = 2, num do
-				g.points[i]:SetPoint("BOTTOMLEFT", g, "BOTTOMLEFT", ((((db.width*db.scale)-(offset*(num-1)))/num)*(i-1))+(offset*(i-1)), 0)
+				g.points[i]:SetPoint("BOTTOMLEFT", g.points[i-1], "TOPLEFT", 0, offset)
 			end
 		end
+	elseif db.growthdirection == "down" then
+		g.points[1]:SetPoint("TOPLEFT", g, "TOPLEFT", 0, 0)
+		if num > 1 then
+			for i = 2, num do
+				g.points[i]:SetPoint("TOPLEFT", g.points[i-1], "BOTTOMLEFT", 0, -offset)
+			end
+		end		
+	elseif db.growthdirection == "right" then
+		g.points[1]:SetPoint("BOTTOMLEFT", g, "BOTTOMLEFT", 0, 0)
+		if num > 1 then
+			for i = 2, num do
+				g.points[i]:SetPoint("BOTTOMLEFT",g.points[i-1], "BOTTOMRIGHT", offset, 0)
+			end
+		end		
+	elseif db.growthdirection == "left" then
+		g.points[1]:SetPoint("BOTTOMRIGHT", g, "BOTTOMRIGHT", 0, 0)
+		if num > 1 then
+			for i = 2, num do
+				g.points[i]:SetPoint("BOTTOMRIGHT", g.points[i-1], "BOTTOMLEFT", -offset, 0)
+			end
+		end			
 	end
 	
 	g:Hide()
