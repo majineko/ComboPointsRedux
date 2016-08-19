@@ -372,8 +372,8 @@ for name, module in core:IterateModules() do
 					text1 = {
                         order = 30,
                         type = 'description',
-                        name = '',
-					}, -- Needed a line break. Is there a better way?
+                        name = 'There are now two size customization modes. In Icon Mode you set the size of the icons, and the frame size is calculated automatically. In Frame Mode you set the size of the frame, and the icon size is calculated automatically.',
+					},
 					mode = {
 						type = "select",
 						name = L["Mode"],
