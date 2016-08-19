@@ -196,7 +196,7 @@ function ComboPointsRedux:OnEnable()
 	self.flasher = self:CreateFlashFrame()
 end
 
-function ComboPointsRedux:Reset()
+function ComboPointsRedux:Reset() -- RESET TO DEFAULT PROFILE
 	for name, module in self:IterateModules() do
 		if self.db.profile.modules[name].enabled then
 			if module:IsEnabled() then
@@ -215,13 +215,16 @@ function ComboPointsRedux:Reset()
 		module.text:SetPoint("CENTER", UIParent, "CENTER", math.random(-150, 150), math.random(-150, 150))
 		module.graphics:SetPoint("CENTER", UIParent, "CENTER", math.random(-150, 150), math.random(-150, 150))
 		
-		if db.growthdirection == "right" or db.growthdirection == "left" then
+		-- default is right, no need to check growthdirection
+		module.graphics:SetWidth(db.width*db.scale)
+		module.graphics:SetHeight(db.height*db.scale)
+		--[[if db.growthdirection == "right" or db.growthdirection == "left" then
 			module.graphics:SetWidth(db.width*db.scale)
 			module.graphics:SetHeight(db.height*db.scale)
 		else
 			module.graphics:SetWidth(db.height*db.scale)
 			module.graphics:SetHeight(db.width*db.scale)
-		end
+		end]]
 		
 		
 		local offset = db.spacing--*db.scale
@@ -229,13 +232,16 @@ function ComboPointsRedux:Reset()
 		local num = module.MAX_POINTS
 		for i = 1, num do
 			module.graphics.points[i].icon:SetTexture(basepath..db.icon)
-			if db.growthdirection == "right" or db.growthdirection == "left" then
+			-- again no need to check, default is right
+			module.graphics.points[i]:SetWidth(db.iconwidth*db.scale)
+			module.graphics.points[i]:SetHeight(db.iconheight*db.scale)
+			--[[if db.growthdirection == "right" or db.growthdirection == "left" then
 				module.graphics.points[i]:SetWidth(db.iconwidth*db.scale)
 				module.graphics.points[i]:SetHeight(db.iconheight*db.scale)
 			else
 				module.graphics.points[i]:SetWidth(db.iconheight*db.scale)
 				module.graphics.points[i]:SetHeight(db.iconwidth*db.scale)
-			end
+			end]]
 			module.graphics.points[i]:SetAlpha(db.emptyPointAlpha)
 			module.graphics.points[i]:ClearAllPoints()
 		end
@@ -248,8 +254,14 @@ function ComboPointsRedux:Reset()
 			end
 		end
 		
-		-- doesnt really need all the checks, since reset is defaulted to right, same up above at line 218 for vertical
-		if db.growthdirection == "up" then
+		-- again, default is right
+		module.graphics.points[1]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", 0, 0)
+		if num > 1 then
+			for i = 2, num do
+				module.graphics.points[i]:SetPoint("BOTTOMLEFT", module.graphics.points[i-1], "BOTTOMRIGHT", offset, 0)
+			end
+		end		
+		--[[if db.growthdirection == "up" then
 			module.graphics.points[1]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", 0, 0)
 			if num > 1 then
 				for i = 2, num do
@@ -277,7 +289,7 @@ function ComboPointsRedux:Reset()
 					module.graphics.points[i]:SetPoint("BOTTOMRIGHT", module.graphics.points[i-1], "BOTTOMLEFT", -offset, 0)
 				end
 			end			
-		end
+		end]]
 		
 		module.text.count:SetShadowColor(0, 0, 0, db.textAlpha)
 		module.text.count:SetFont(LSM:Fetch("font", db.font), db.fontsize, db.outline)
@@ -297,7 +309,7 @@ function ComboPointsRedux:Reset()
 	end
 end
 
-function ComboPointsRedux:Refresh()
+function ComboPointsRedux:Refresh() -- CHANGE / COPY PROFILE
 	for name, module in self:IterateModules() do
 		--enable any modules that were disabled on the previous profile
 		if self.db.profile.modules[name].enabled then
@@ -349,7 +361,7 @@ function ComboPointsRedux:Refresh()
 						elseif db.growthdirection == "up" then
 							module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
 						elseif db.growthdirection == "down" then
-							module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s + db.iconwidth*db.scale)
+							module.graphics:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s + db.iconwidth*db.scale)
 						end
 				else
 					module.graphics:SetPoint("CENTER", UIParent, "CENTER", math.random(-150, 150), math.random(-150, 150))
@@ -448,7 +460,7 @@ function ComboPointsRedux:UpdateSettings(name)
 				db.height = db.iconheight
 			end
 		end
-		-- for all growth directions, position frame so the first point is in the same place
+		-- for all growth directions, position frame so the bottom left corner of the first point is in the same place.
 		-- needed to do this after adjusting icon sizes
 		if db.growthdirection == "right" then
 			module.graphics:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
@@ -460,7 +472,7 @@ function ComboPointsRedux:UpdateSettings(name)
 			module.graphics:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s + db.iconwidth*db.scale)
 		end
 		
-		-- setting frame size, flipped h and w if veritcal
+		-- setting frame size, flipped height and width if veritcal
 		if db.growthdirection == "right" or db.growthdirection == "left" then
 			module.graphics:SetWidth(db.width*db.scale)
 			module.graphics:SetHeight(db.height*db.scale)
@@ -491,7 +503,7 @@ function ComboPointsRedux:UpdateSettings(name)
 			end
 		end
 		
-		--adjust for orientation changes (this updates spacing too)
+		--adjust for growth direction
 		if db.growthdirection == "up" then
 			module.graphics.points[1]:SetPoint("BOTTOMLEFT", module.graphics, "BOTTOMLEFT", 0, 0)
 			if num > 1 then
