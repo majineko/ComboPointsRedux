@@ -15,4 +15,7 @@
 <!--Warlock-->
 <Script file="Modules\SoulShards.lua"/>
 
+<!--Death Knight-->
+<Script file="Modules\FesteringWounds.lua"/>
+
 </Ui>
