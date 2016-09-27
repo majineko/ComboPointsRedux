@@ -2,29 +2,34 @@ if select(2, UnitClass("player")) ~= "DEATHKNIGHT" then return end
 
 local UnitPower = UnitPower
 
-
 local cpr = LibStub("AceAddon-3.0"):GetAddon("ComboPointsRedux")
 local modName = "Festering Wounds"
 local mod = cpr:NewModule(modName)
 
 function mod:OnInitialize()
-	self.MAX_POINTS = 8
+	if GetSpecialization() == 3 then
+		self.MAX_POINTS = 8
+	else
+		self.MAX_POINTS = 0
+	end
+	
 	local _,_,_,FWstacks = UnitDebuff("target", "Festering Wound", nil, "PLAYER")
 	self.Count =  FWstacks or 0
+	
 	self.displayName = "Festering Wounds"
 	self.abbrev = "FW"
-	self.events = { ["UNIT_AURA"] = "Update", ["PLAYER_SPECIALIZATION_CHANGED"] = "UpdateMaxPoints", ["PLAYER_LOGIN"] = "Update" }
+	self.events = { ["UNIT_AURA"] = "Update", ["PLAYER_TARGET_CHANGED"] = "Update", ["PLAYER_SPECIALIZATION_CHANGED"] = "UpdateMaxPoints", ["PLAYER_LOGIN"] = "UpdateMaxPoints" }
+
 end
 
 local oldCount = 0
 function mod:Update()
-	print("update running")
 	local _,_,_,FWstacks = UnitDebuff("target", "Festering Wound", nil, "PLAYER")
 	self.Count =  FWstacks or 0
 	local r, g, b = cpr:GetColorByPoints(modName, self.Count)
 	local a, a2 = cpr:GetAlphas(modName)
 	
-	if self.Count > 0 then
+	if self.Count > 0 and self.MAX_POINTS > 0 then
 		if self.graphics then
 			for i = self.Count, 1, -1 do
 				self.graphics.points[i].icon:SetVertexColor(r, g, b)
@@ -61,14 +66,17 @@ end
 
 function mod:UpdateMaxPoints()
 	local _,_,_,FWstacks = UnitDebuff("target", "Festering Wound", nil, "PLAYER")
-	self.Count =  FWstacks or 0
-	local a, a2 = cpr:GetAlphas(modName)
 	
 	if GetSpecialization() == 3 then
 		self.MAX_POINTS = 8
+		self.Count =  FWstacks or 0
 	else
 		self.MAX_POINTS = 0
-	end
+		self.Count = 0
+	end	
+	
+	local a, a2 = cpr:GetAlphas(modName)
+		
 	if self.graphics then
 		for i = 1, 8 do
 			self.graphics.points[i]:Hide()
